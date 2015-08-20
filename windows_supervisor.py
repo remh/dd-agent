@@ -18,6 +18,9 @@ import multiprocessing
 from optparse import Values
 from collections import deque
 
+# win32
+import win32api
+
 # project
 from win32.common import handle_exe_click
 from checks.collector import Collector
@@ -267,11 +270,14 @@ if __name__ == '__main__':
             supervisor = AgentSupervisor()
 
             def bye_bye(signum, frame):
+                log.info("Stopping all subprocesses...")
                 supervisor.stop()
                 log.info("Have a nice day !")
                 sys.exit(0)
 
             signal.signal(signal.SIGINT, bye_bye)
+            signal.signal(signal.SIGTERM, bye_bye)
+            win32api.SetConsoleCtrlHandler(bye_bye, True)
 
             # Here we go !
             supervisor.run()

@@ -72,13 +72,16 @@ class AgentService(win32serviceutil.ServiceFramework):
         if self.proc is not None:
             self.log("Killing supervisor")
             # Not so happy actually. This is dirty but there is no other simple way
+            # We seem to have to kill all our subprocess the violent way...
             parent=psutil.Process(self.proc.pid)
             children = parent.children(recursive=True)
             for child in children:
                 child.kill()
-            # Kids, you have ten seconds to die !
-            psutil.wait_procs(children, timeout=10)
-            self.log("Supervisor killed: CTRL-C sent to it.")
+            # Kids, you have 4 seconds to die !
+            parent.kill()
+            psutil.wait_procs([parent] + children, timeout=4)
+            #
+            self.log("The supervisor and all his child processes have been killed.")
 
         # We can sleep quietly now
         win32event.SetEvent(self.h_wait_stop)
@@ -101,7 +104,8 @@ class AgentService(win32serviceutil.ServiceFramework):
         # here, tell windows we're closing the service and report accordingly
         try:
             os.chdir(self.agent_path)
-            self.proc = subprocess.Popen(["python", "windows_supervisor.py" , "start"])
+
+            self.proc = subprocess.Popen(["python", "windows_supervisor.py" , "start"], shell=True)
             os.chdir(self.agent_path + "\\win32")
         except WindowsError as e:
             self.log("WindowsError occured when starting our supervisor :\n\t"
