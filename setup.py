@@ -38,8 +38,8 @@ if sys.platform == 'win32':
 
         # 3p
         'psutil',
-        'wind32api'
-        'subprocess'
+        'wind32api',
+        'subprocess',
         'win32service',
         'win32serviceutil',
         'win32event',
