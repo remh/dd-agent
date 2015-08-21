@@ -105,7 +105,7 @@ class AgentService(win32serviceutil.ServiceFramework):
         try:
             os.chdir(self.agent_path)
 
-            self.proc = subprocess.Popen(["python", "windows_supervisor.py" , "start"], shell=True)
+            self.proc = subprocess.Popen(["enbedded\\python.exe", "agent\\win32\\windows_supervisor.py" , "start"], shell=True)
             os.chdir(self.agent_path + "\\win32")
         except WindowsError as e:
             self.log("WindowsError occured when starting our supervisor :\n\t"
