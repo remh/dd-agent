@@ -38,7 +38,7 @@ if sys.platform == 'win32':
 
         # 3p
         'psutil',
-        'wind32api',
+        'win32api',
         'subprocess',
         'win32service',
         'win32serviceutil',
