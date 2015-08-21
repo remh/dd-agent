@@ -62,7 +62,8 @@ class AgentService(win32serviceutil.ServiceFramework):
 
         self.log_path = os.path.join(_windows_commondata_path(), 'Datadog', 'logs', 'service.log')
 
-        self.agent_path = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
+        self.agent_path = os.path.dirname(os.path.dirname(
+            os.path.dirname(os.path.dirname(os.path.realpath(__file__)))))
         self.log("Agent path: {0}".format(self.agent_path))
         self.proc = None
 
@@ -104,9 +105,7 @@ class AgentService(win32serviceutil.ServiceFramework):
         # here, tell windows we're closing the service and report accordingly
         try:
             os.chdir(self.agent_path)
-
-            self.proc = subprocess.Popen(["enbedded\\python.exe", "agent\\win32\\windows_supervisor.py" , "start"], shell=True)
-            os.chdir(self.agent_path + "\\win32")
+            self.proc = subprocess.Popen([".\\embedded\\python.exe", "agent\\windows_supervisor.py" , "start"], shell=True)
         except WindowsError as e:
             self.log("WindowsError occured when starting our supervisor :\n\t"
                      "[Errno {1}] {0}".
