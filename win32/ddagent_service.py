@@ -10,12 +10,12 @@ Many thanks to the author of the article below which saved me quite some time:
 http://ryrobes.com/python/running-python-scripts-as-a-windows-service/
 
 """
-
-# 3p
+#stdlib
 import os
 import time
-import psutil
 
+# 3p
+import psutil
 import win32api
 import subprocess
 import win32event
