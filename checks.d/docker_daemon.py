@@ -45,10 +45,16 @@ CGROUP_METRICS = [
     },
 ]
 
+def image_tag_extractor(c):
+    split = c["Image"].split(":", 1) if "Image" in c else c["RepoTags"][0].split(':', 1)
+    if len(split) == 1:
+        return None
+    return split[1]
+
 TAG_EXTRACTORS = {
     "docker_image": lambda c: c["Image"],
     "image_name": lambda c: c["Image"].split(':', 1)[0] if 'Image' in c else c["RepoTags"][0].split(':', 1)[0],
-    "image_tag": lambda c: c["Image"].split(':', 1)[1] if 'Image' in c else c["RepoTags"][0].split(':', 1)[1],
+    "image_tag": image_tag_extractor,
     "container_command": lambda c: c["Command"],
     "container_name": lambda c: c['Names'][0].lstrip("/") if c["Names"] else c['Id'][:11],
 }
@@ -212,8 +218,6 @@ class DockerDaemon(AgentCheck):
                 self.log.debug("Container {0} is excluded".format(container_name))
                 continue
 
-
-
             containers_by_id[container['Id']] = container
 
         for tags, count in containers_running_count.iteritems():
@@ -236,7 +240,9 @@ class DockerDaemon(AgentCheck):
         """Generate the tags for a given entity (container or image) according to a list of tag names."""
         tags = []
         for tag_name in tag_names:
-            tags.append('%s:%s' % (tag_name, self._extract_tag_value(entity, tag_name)))
+            tag_value = self._extract_tag_value(entity, tag_name)
+            if tag_value is not None:
+                tags.append('%s:%s' % (tag_name, tag_value.strip()))
 
         return tags
 
@@ -251,8 +257,9 @@ class DockerDaemon(AgentCheck):
         # Check for already extracted tags
         if "_tag_values" not in entity:
             entity["_tag_values"] = {}
+
         if tag_name not in entity["_tag_values"]:
-            entity["_tag_values"][tag_name] = TAG_EXTRACTORS[tag_name](entity).strip()
+            entity["_tag_values"][tag_name] = TAG_EXTRACTORS[tag_name](entity)
 
         return entity["_tag_values"][tag_name]
 
