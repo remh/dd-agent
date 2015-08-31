@@ -5,7 +5,7 @@ import requests
 import time
 import socket
 import urllib2
-from collections import defaultdict, Counter
+from collections import defaultdict, Counter, deque
 
 # project
 from checks import AgentCheck
@@ -411,7 +411,7 @@ class DockerDaemon(AgentCheck):
 
     def _pre_aggregate_events(self, api_events, containers_by_id):
         # Aggregate events, one per image. Put newer events first.
-        events = defaultdict(list)
+        events = defaultdict(deque)
         for event in api_events:
             # Skip events related to filtered containers
             if self._is_container_excluded(containers_by_id.get(event['id'], {})):
@@ -420,7 +420,7 @@ class DockerDaemon(AgentCheck):
                 continue
             # Known bug: from may be missing
             if 'from' in event:
-                events[event['from']].insert(0, event)
+                events[event['from']].appendleft(event)
         return events
 
     def _format_events(self, aggregated_events, containers_by_id):
