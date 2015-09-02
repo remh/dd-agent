@@ -60,15 +60,6 @@ TAG_EXTRACTORS = {
 }
 
 
-"""WIP for a new docker check
-
-TODO:
- - Support a global "extra_tags" configuration, adding tags to all the metrics/events --> OK, need to test
- - Write tests
- - Test on all the platforms
-"""
-
-
 def get_mountpoints(docker_root):
     mountpoints = {}
     for metric in CGROUP_METRICS:
@@ -111,7 +102,8 @@ class DockerDaemon(AgentCheck):
         # Just needs to be done once
         instance = instances[0]
         self.client = get_client(base_url=instance.get("url"), timeout=timeout)
-        self._mountpoints = get_mountpoints(init_config.get('docker_root', '/'))
+        self._docker_root = init_config.get('docker_root', '/')
+        self._mountpoints = get_mountpoints(self._docker_root)
         self._cgroup_filename_pattern = find_cgroup_filename_pattern(self._mountpoints)
         
         self.cgroup_listing_retries = 0
@@ -206,7 +198,7 @@ class DockerDaemon(AgentCheck):
             if ecs_tags:
                 custom_tags += ecs_tags.get(container['Id'], [])
             container_name = container['Names'][0].strip('/')
-            tag_names = instance.get("container_tags", ["image_name"])
+            tag_names = instance.get("container_tags", ["docker_image", "image_name"])
             container_tags = self._get_tags(container, tag_names) + instance.get('tags', []) + custom_tags
             # Check if the container is included/excluded via its tags
             if self._is_container_running(container):
@@ -510,13 +502,14 @@ class DockerDaemon(AgentCheck):
     # proc files
     def _crawl_container_pids(self, container_dict):
         """Crawl `/proc` to find container PIDs and add them to `containers_by_id`."""
-        for folder in os.listdir('/proc'):
+        proc_dir = os.path.join(self._docker_root, 'proc')
+        for folder in os.listdir(proc_dir):
             try:
                 int(folder)
             except ValueError:
                 continue
             try:
-                path = '/proc/%s/cgroup' % folder
+                path = os.path.join(proc_dir, folder, 'cgroup')
                 with open(path, 'r') as f:
                     content = [line.strip().split(':') for line in f.readlines()]
             except Exception, e:
@@ -528,7 +521,7 @@ class DockerDaemon(AgentCheck):
                 if 'docker/' in content.get('cpuacct'):
                     container_id = content['cpuacct'].split('docker/')[1]
                     container_dict[container_id]['_pid'] = folder
-                    container_dict[container_id]['_proc_root'] = '/proc/%s/' % folder
+                    container_dict[container_id]['_proc_root'] = os.path.join(proc_dir, folder)
             except Exception, e:
                 self.warning("Cannot parse %s content: %s" % (path, str(e)))
                 continue
