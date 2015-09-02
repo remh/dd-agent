@@ -476,7 +476,6 @@ class Collector(object):
         payload['service_checks'] = service_checks
 
         # Populate metadata
-        raise Exception("Yann exception")
         self._populate_payload_metadata(payload, check_statuses, start_event)
 
         collect_duration = timer.step()
