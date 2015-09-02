@@ -476,6 +476,7 @@ class Collector(object):
         payload['service_checks'] = service_checks
 
         # Populate metadata
+        raise Exception("Yann exception")
         self._populate_payload_metadata(payload, check_statuses, start_event)
 
         collect_duration = timer.step()
@@ -484,7 +485,6 @@ class Collector(object):
             metric_context = {
                 'collection_time': collect_duration,
                 'emit_time': self.emit_duration,
-                'cpu_time': time.clock() - cpu_clock
             }
             if not Platform.is_windows():
                 metric_context['cpu_time'] = time.clock() - cpu_clock
@@ -493,9 +493,10 @@ class Collector(object):
             self._agent_metrics.run()
             agent_stats = self._agent_metrics.get_metrics()
             payload['metrics'].extend(agent_stats)
-            log.debug("\n Agent developer mode stats: \n {0}".format(
-                Collector._stats_for_display(agent_stats))
-            )
+            if self.agentConfig.get('developer_mode'):
+                log.debug("\n Agent developer mode stats: \n {0}".format(
+                    Collector._stats_for_display(agent_stats))
+                )
 
         # Let's send our payload
         emitter_statuses = payload.emit(log, self.agentConfig, self.emitters,
