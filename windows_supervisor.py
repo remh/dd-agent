@@ -249,9 +249,11 @@ class JMXFetchProcess(DDProcess):
 if __name__ == '__main__':
     multiprocessing.freeze_support()
     if len(sys.argv) != 2:
+        log.info("The agent supervisor has been called with the wrong nunmber of arguments")
         handle_exe_click("Datadog-Agent Supervisor")
     else:
         if sys.argv[1] == "start":
+            log.info("Windows supervisor has just been started...")
             # Let's start our stuff and register a good old SIGINT callback
             supervisor = AgentSupervisor()
 

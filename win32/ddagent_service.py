@@ -104,6 +104,7 @@ class AgentService(win32serviceutil.ServiceFramework):
         # will be performed in a non blocking way. If an error is triggered
         # here, tell windows we're closing the service and report accordingly
         try:
+            self.log("Changing working directory to \"{0}\"".format(self.agent_path + "\\agent\\"))
             os.chdir(self.agent_path + "\\agent\\")
             self.proc = subprocess.Popen(["..\\embedded\\python.exe", "windows_supervisor.py" , "start"], shell=True)
         except WindowsError as e:
